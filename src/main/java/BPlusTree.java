@@ -29,10 +29,6 @@ public class BPlusTree<Key extends Comparable<Key>, Value> {
         return (index == -1) ? null : leaf.getValue(index);
     }
 
-    public List<Value> search(Key key) {
-        return rangeScan(key, key);
-    }
-
     public void delete(Key key) {
         BTreeLeafNode<Key, Value> leaf = this.findLeaf(key);
         boolean isDelete = leaf.delete(key);
@@ -64,20 +60,35 @@ public class BPlusTree<Key extends Comparable<Key>, Value> {
         return leaf.values[leaf.keyCount - 1];
     }
 
-    public List<Value> rangeScan(Key fromKey, Key toKey) {
+    public Value[] rangeScan(Key fromKey, Key toKey) {
         BTreeLeafNode<Key, Value> leaf = this.findLeaf(fromKey);
-        ArrayList<Value> values = new ArrayList<>();
-        while (leaf != null) {
-            for (int i = 0; i < leaf.getKeyCount(); i++) {
-                if (leaf.getKey(i) == null) { break; }
-                if (fromKey.compareTo(leaf.getKey(i)) <= 0 && toKey.compareTo(leaf.getKey(i)) >= 0) {
-                    values.add(leaf.getValue(i));
-                }
-            }
-            leaf = (BTreeLeafNode<Key, Value>) leaf.rightSibling;
+        int idx = leaf.search(fromKey);
 
+        if (idx < leaf.keyCount && leaf.keys[idx].compareTo(fromKey) >= 0) {
+            Value[] arr = (Value[]) new Object[cnt];
+            int cntArr = 0;
+            while (leaf != null) {
+                for (int i = idx; i < leaf.keyCount; i++) {
+                    if (leaf.keys[i].compareTo(toKey) > 0) {
+                        Value[] needArr = (Value[]) new Object[cntArr];
+                        System.arraycopy(arr, 0, needArr, 0, cntArr);
+                        arr = null;
+                        return needArr;
+                    }
+
+                    arr[cntArr] = leaf.values[i];
+                    cntArr++;
+                }
+                idx = 0;
+                leaf = (BTreeLeafNode<Key, Value>) leaf.rightSibling;
+            }
+
+            Value[] needArr = (Value[]) new Object[cntArr];
+            System.arraycopy(arr, 0, needArr, 0, cntArr);
+            arr = null;
+            return needArr;
         }
-        return values;
+        return null;
     }
 
     public Value[] fullScan() {

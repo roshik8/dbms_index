@@ -63,7 +63,7 @@ public class BTreeIndex<Key extends Comparable<Key>, Value> {
     }
 
     public List<Value> rangeScan(Key fromKey, Key toKey) {
-        return bPlusTree.rangeScan(fromKey, toKey);
+        return Arrays.stream(bPlusTree.rangeScan(fromKey, toKey)).toList();
     }
 
     public Value getMin() {
